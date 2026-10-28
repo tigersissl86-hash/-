@@ -1,0 +1,12 @@
+{
+  "name": "Моят хладилник",
+  "short_name": "Хладилник",
+  "description": "Личен списък с продукти, количества и срокове на годност",
+  "lang": "bg",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f8f5",
+  "theme_color": "#247345",
+  "icons": [{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}

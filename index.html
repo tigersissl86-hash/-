@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#247345">
+<meta name="description" content="Личен списък с продукти, количества и срокове на годност.">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>Моят хладилник</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#17231b;background:#f5f8f5;--green:#247345;--pale:#e1f2e5;--line:#dce6de}
+*{box-sizing:border-box}body{margin:0}header{background:var(--green);color:white;padding:20px 16px 24px;border-radius:0 0 24px 24px}
+h1{font-size:1.55rem;margin:0 0 5px}header p{margin:0;opacity:.9;font-size:.92rem}.wrap{max-width:680px;margin:auto;padding:14px 14px 40px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:-8px}.stat{background:white;border:1px solid var(--line);border-radius:15px;padding:12px 10px;box-shadow:0 2px 8px #18351d0a}.stat small{display:block;color:#5d6c61;font-size:.75rem}.stat strong{font-size:1.4rem}
+nav{display:flex;gap:7px;margin:16px 0;overflow:auto}button,.tab{font:inherit;border:0;border-radius:12px;padding:11px 13px;cursor:pointer}.tab{white-space:nowrap;background:#e9efe9;color:#314638}.tab.active,.primary{background:var(--green);color:white}.secondary{background:white;border:1px solid var(--line);color:#26392b}.danger{background:#fff0ee;color:#a52d24}.panel{background:white;border:1px solid var(--line);border-radius:18px;padding:15px;margin-bottom:12px}
+h2{font-size:1.08rem;margin:0 0 13px}.field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}.field label{font-size:.87rem;color:#425448}input,select{font:inherit;width:100%;padding:12px;border:1px solid #ccd9ce;border-radius:11px;background:white;color:#17231b;min-height:44px}.row{display:flex;gap:9px}.row>*{flex:1;min-width:0}.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.filters button{padding:8px 11px;background:#edf2ed;color:#34473a}.filters button.active{background:var(--pale);color:#155a30;font-weight:650}.product{border:1px solid var(--line);border-radius:14px;padding:13px;margin-bottom:9px}.product-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.product h3{margin:0 0 4px;font-size:1rem}.muted{font-size:.82rem;color:#66766a}.qty{font-weight:700;white-space:nowrap}.actions{display:flex;gap:7px;margin-top:12px;align-items:center}.actions button{padding:8px 11px}.actions .spacer{flex:1}.empty{text-align:center;color:#69796d;padding:24px 8px}.badge{display:inline-block;font-size:.75rem;padding:4px 7px;border-radius:7px;background:#f1f4f1;margin-top:5px}.badge.warn{background:#fff0d8;color:#865200}.badge.bad{background:#ffe7e4;color:#a52d24}.foot{color:#68776c;font-size:.78rem;line-height:1.5;text-align:center;padding:8px}
+@media(min-width:520px){.wrap{padding-top:18px}.product-list{display:grid;grid-template-columns:1fr 1fr;gap:9px}.product{margin:0}}
+</style>
+</head>
+<body>
+<header><div class="wrap" style="padding:0 2px"><h1>🥬 Моят хладилник</h1><p>Знай какво имаш вкъщи, без да отваряш вратата.</p></div></header>
+<main class="wrap">
+<div class="stats"><div class="stat"><small>Продукти</small><strong id="statItems">0</strong></div><div class="stat"><small>За пазаруване</small><strong id="statShop">0</strong></div><div class="stat"><small>Изтичат скоро</small><strong id="statExpiry">0</strong></div></div>
+<nav aria-label="Раздели">
+<button class="tab active" data-tab="inventory">Наличности</button><button class="tab" data-tab="add">＋ Добави</button><button class="tab" data-tab="shopping">Пазаруване</button>
+</nav>
+<section id="inventoryView">
+<div class="panel"><div class="field" style="margin:0"><label for="search">Търси продукт</label><input id="search" placeholder="Напр. мляко"></div></div>
+<div class="filters" id="filters"><button class="active" data-filter="Всички">Всички</button><button data-filter="Хладилник">Хладилник</button><button data-filter="Фризер">Фризер</button><button data-filter="Шкаф">Шкаф</button></div>
+<div id="products" class="product-list"></div>
+</section>
+<section id="addView" hidden>
+<form class="panel" id="productForm">
+<h2 id="formTitle">Добави продукт</h2><input type="hidden" id="editId">
+<div class="field"><label for="name">Име на продукта *</label><input id="name" required maxlength="90" placeholder="Напр. Кисело мляко"></div>
+<div class="row"><div class="field"><label for="quantity">Количество *</label><input id="quantity" type="number" min="0" step="any" value="1" required></div>
+<div class="field"><label for="unit">Мерна единица</label><select id="unit"><option>бр.</option><option>оп.</option><option>г</option><option>кг</option><option>мл</option><option>л</option></select></div></div>
+<div class="field"><label for="place">Място</label><select id="place"><option>Хладилник</option><option>Фризер</option><option>Шкаф</option></select></div>
+<div class="field"><label for="expiry">Срок на годност (по желание)</label><input id="expiry" type="date"></div>
+<div class="row"><button class="primary" type="submit" id="saveProduct">Запази продукта</button><button class="secondary" type="button" id="cancelEdit" hidden>Отказ</button></div>
+</form>
+</section>
+<section id="shoppingView" hidden>
+<form class="panel" id="shoppingForm"><h2>Списък за пазаруване</h2><div class="row"><div class="field"><label for="shopName">Какво ти липсва?</label><input id="shopName" placeholder="Напр. хляб"></div><div style="flex:0 0 auto;align-self:end;padding-bottom:12px"><button class="primary" type="submit">＋ Добави</button></div></div></form>
+<div id="shoppingList" class="panel"></div>
+</section>
+<div class="foot">Данните се пазят локално в този браузър на телефона. Не изчиствай данните на сайта/браузъра, ако искаш да ги запазиш. Експортирай резервно копие периодично.</div>
+<div class="panel"><h2>Резервно копие</h2><p class="muted">Запази копие на данните си или ги възстанови по-късно.</p><div class="row"><button class="secondary" id="exportBtn">Изтегли копие</button><button class="secondary" id="importBtn">Възстанови копие</button><input type="file" id="importFile" accept="application/json,.json" hidden></div></div>
+</main>
+<script>
+const KEY='moqtHladilnik_v1';
+let state={items:[],shopping:[]},filter='Всички',activeTab='inventory';
+const $=id=>document.getElementById(id);
+function load(){try{const raw=localStorage.getItem(KEY);if(raw)state={...state,...JSON.parse(raw)}}catch(e){alert('Не успях да прочета запазените данни. Можеш да възстановиш резервно копие.')}render()}
+function persist(){localStorage.setItem(KEY,JSON.stringify(state));render()}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function daysUntil(date){if(!date)return null;const now=new Date();now.setHours(0,0,0,0);return Math.round((new Date(date+'T00:00:00')-now)/86400000)}
+function render(){
+$('statItems').textContent=state.items.length;$('statShop').textContent=state.shopping.length;
+$('statExpiry').textContent=state.items.filter(i=>daysUntil(i.expiry)!==null&&daysUntil(i.expiry)<=3).length;
+const q=$('search').value.trim().toLocaleLowerCase('bg');
+const visible=state.items.filter(i=>(filter==='Всички'||i.place===filter)&&i.name.toLocaleLowerCase('bg').includes(q));
+$('products').innerHTML=visible.length?visible.map(i=>{let d=daysUntil(i.expiry),badge='';if(d!==null)badge=`<div class="badge ${d<0?'bad':d<=3?'warn':''}">${d<0?'Изтекъл срок':d===0?'Изтича днес':d<=3?'Изтича след '+d+' дни':'Срок: '+esc(i.expiry)}</div>`;
+return `<article class="product"><div class="product-top"><div><h3>${esc(i.name)}</h3><div class="muted">${esc(i.place)}</div>${badge}</div><div class="qty">${esc(i.quantity)} ${esc(i.unit)}</div></div><div class="actions"><button class="secondary" data-action="minus" data-id="${i.id}" aria-label="Намали">−</button><button class="secondary" data-action="plus" data-id="${i.id}" aria-label="Увеличи">＋</button><button class="secondary" data-action="edit" data-id="${i.id}">Редактирай</button><span class="spacer"></span><button class="secondary" data-action="buy" data-id="${i.id}" title="Добави в списъка за пазаруване">🛒</button></div><div class="actions"><button class="danger" data-action="delete" data-id="${i.id}">Изтрий</button></div></article>`}).join(''):'<div class="panel empty">Няма продукти тук. Натисни „Добави“, за да започнеш.</div>';
+$('shoppingList').innerHTML=state.shopping.length?state.shopping.map(i=>`<div class="actions" style="margin:0 0 8px"><span style="flex:1">${esc(i.name)}</span><button class="primary" data-shop-action="done" data-id="${i.id}">✓ Купено</button><button class="danger" data-shop-action="delete" data-id="${i.id}">Изтрий</button></div>`).join(''):'<div class="empty">Списъкът е празен.</div>';
+}
+function showTab(tab){activeTab=tab;for(const t of document.querySelectorAll('[data-tab]'))t.classList.toggle('active',t.dataset.tab===tab);$('inventoryView').hidden=tab!=='inventory';$('addView').hidden=tab!=='add';$('shoppingView').hidden=tab!=='shopping';if(tab!=='add')resetForm();window.scrollTo({top:0,behavior:'smooth'})}
+function resetForm(){$('productForm').reset();$('editId').value='';$('quantity').value='1';$('formTitle').textContent='Добави продукт';$('saveProduct').textContent='Запази продукта';$('cancelEdit').hidden=true}
+function editItem(i){$('editId').value=i.id;$('name').value=i.name;$('quantity').value=i.quantity;$('unit').value=i.unit;$('place').value=i.place;$('expiry').value=i.expiry||'';$('formTitle').textContent='Редактирай продукт';$('saveProduct').textContent='Запази промените';$('cancelEdit').hidden=false;showTab('add');$('editId').value=i.id;$('name').value=i.name;$('quantity').value=i.quantity;$('unit').value=i.unit;$('place').value=i.place;$('expiry').value=i.expiry||'';$('formTitle').textContent='Редактирай продукт';$('saveProduct').textContent='Запази промените';$('cancelEdit').hidden=false}
+document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+document.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{filter=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(x=>x.classList.toggle('active',x===b));render()}));
+$('search').addEventListener('input',render);
+$('productForm').addEventListener('submit',e=>{e.preventDefault();const id=$('editId').value;const item={id:id?Number(id):Date.now(),name:$('name').value.trim(),quantity:Number($('quantity').value),unit:$('unit').value,place:$('place').value,expiry:$('expiry').value};if(!item.name||!Number.isFinite(item.quantity)||item.quantity<0)return;if(id)state.items=state.items.map(x=>x.id===Number(id)?item:x);else state.items.push(item);persist();showTab('inventory')});
+$('cancelEdit').addEventListener('click',()=>showTab('inventory'));
+$('products').addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(!b)return;const id=Number(b.dataset.id),i=state.items.find(x=>x.id===id);if(!i)return;switch(b.dataset.action){case'minus':i.quantity=Math.max(0,Math.round((i.quantity-((i.unit==='г'||i.unit==='мл')?50:1))*1000)/1000);break;case'plus':i.quantity=Math.round((i.quantity+((i.unit==='г'||i.unit==='мл')?50:1))*1000)/1000;break;case'edit':editItem(i);return;case'delete':if(!confirm('Да изтрия ли '+i.name+'?'))return;state.items=state.items.filter(x=>x.id!==id);break;case'buy':if(!state.shopping.some(s=>s.name.toLocaleLowerCase('bg')===i.name.toLocaleLowerCase('bg')))state.shopping.push({id:Date.now(),name:i.name});showTab('shopping');break;}persist()});
+$('shoppingForm').addEventListener('submit',e=>{e.preventDefault();const name=$('shopName').value.trim();if(!name)return;if(!state.shopping.some(s=>s.name.toLocaleLowerCase('bg')===name.toLocaleLowerCase('bg')))state.shopping.push({id:Date.now(),name});$('shopName').value='';persist()});
+$('shoppingList').addEventListener('click',e=>{const b=e.target.closest('button[data-shop-action]');if(!b)return;const id=Number(b.dataset.id);state.shopping=state.shopping.filter(s=>s.id!==id);persist()});
+$('exportBtn').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='moqt-hladilnik-rezervno-kopie.json';a.click();URL.revokeObjectURL(url)});
+$('importBtn').addEventListener('click',()=>$('importFile').click());
+$('importFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{const v=JSON.parse(await f.text());if(!Array.isArray(v.items)||!Array.isArray(v.shopping))throw Error();if(confirm('Възстановяването ще замени текущия списък. Продължаваме ли?')){state=v;persist();alert('Копието е възстановено.')}}catch(err){alert('Файлът не изглежда като валидно резервно копие.')}e.target.value=''});
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
+load();
+</script>
+</body></html>
